@@ -7,7 +7,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import javax.swing.JFileChooser;
 
-
+/*
+ * 
+ * Class to handle all the saving options in to the disc 
+ * 
+ * @author Or Katzir 
+ * 
+ * @version 2
+ * 
+ *-- This class needs work --
+ * 
+ */
 public class Saving {
 	
 	private File currentDir;
@@ -44,15 +54,14 @@ public class Saving {
 
 	 public void readObject(File f) throws IOException
 	    {
-	        ObjectInputStream in = new ObjectInputStream
-	                            (new FileInputStream(f));
-	        Shapes[] s = null;
+	        ObjectInputStream in = new ObjectInputStream(new FileInputStream(f));
+	        Shapes[] shapes;
 	        try {
 	            while(true)
 	            {
-	            	s=(Shapes[]) in.readObject();
-	            	panel.setShapes(s);
-	            	panel.setIndex(s[0].getIndex());
+	            	shapes=(Shapes[]) in.readObject();
+	            	panel.setShapes(shapes);
+	            	panel.setIndex(shapes[0].getIndex());
 	            	
 	            }
 	        }
