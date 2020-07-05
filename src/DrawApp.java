@@ -1,3 +1,4 @@
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.EOFException;
@@ -13,62 +14,79 @@ import javax.swing.*;
 /**
  * 
  * This class will create the GUI for the application
+ * @author Or Katzir
+ * @version 2
  *
  */
 public class DrawApp extends JFrame implements ActionListener {
 
-	private DrawPanel panel; // The panel to draw on 
-	private JButton clear; // Button to clear the screen
-	private JButton del; // Button to delete the last shape
-	private JButton colorbtn; // Button to choose the color of the shape
+	private DrawPanel drawPanel; //The panel to draw on 
+	private JButton clear; //Button to clear the screen
+	private JButton delete; //Button to delete the last shape
+	private JButton colorbtn; //Button to choose the color of the shape
+	private JButton save; //Button to save the drawing to an existing file in the system
+	private JButton open; //Button to load a draw to the application screen from computer files
+	private JButton newSave; //Button to save new file
 	private Color color; //The color of the shape
-	private JComboBox shapesMenu; // Drop down menu to choose the shapes to draw
-	private JCheckBox fill; // Check box to choose if to fill the shape or not
-	private JButton save; // Button to save the drawing to an existing file in the system
-	private JButton open; // Button to load a draw to the application screen from computer files
-	private JButton saveNew; // Button to save new file
-	private Saving saving;
-
+	private JComboBox shapesMenu; //Drop down menu to choose the shapes to draw
+	private JCheckBox fill; //Check box to choose if to fill the shape or not
+	private Saving saving; //Saving class object to handle all the saving 
+	private File file; //File object 
+	private JPanel buttonPanel; //Panel to hold all the buttons
+	
+	
 	/**
 	 * Creating new GUI of the drawing application
 	 */
 	public DrawApp() {
 		super("Drawing Program2");
 		
-		panel = new DrawPanel();
-
+		drawPanel = new DrawPanel();
+		saving = new Saving(drawPanel);
 		
+		buttonsSetup();
+		add(drawPanel, BorderLayout.CENTER);
 
-		saving = new Saving(panel);
+		setSize(800, 700);
+		setVisible(true);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+	
+	
+	
+	
+	/*
+	 * Private method to set up all the buttons 
+	 */
+	private void buttonsSetup() {
 		
+		buttonPanel = new JPanel();
 		
 		clear = new JButton("Clear");
-		del = new JButton("Delete last");
+		delete = new JButton("Delete last");
 		colorbtn = new JButton("Color");
 		save = new JButton("Save");
 		open=new JButton("Open");
-		saveNew = new JButton("Save as");
+		newSave = new JButton("Save as");
 		
 		open.addActionListener(this);
 		save.addActionListener(this);
 		clear.addActionListener(this);
-		del.addActionListener(this);
+		delete.addActionListener(this);
 		colorbtn.addActionListener(this);
-		saveNew.addActionListener(this);
+		newSave.addActionListener(this);
 
 		String str[] = { "SHAPES", "Line", "Line2", "Line3", "Circle", "Square" };
 		shapesMenu = new JComboBox(str);
-
 		shapesMenu.addActionListener(this);
 
 		fill = new JCheckBox("Fill shape");
 		fill.addActionListener(this);
 
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(del);
+		buttonPanel.add(delete);
 		buttonPanel.add(clear);
 		buttonPanel.add(colorbtn);
-		buttonPanel.add(saveNew);
+		buttonPanel.add(newSave);
 		buttonPanel.add(save);
 		buttonPanel.add(open);
 		buttonPanel.add(shapesMenu);
@@ -77,119 +95,159 @@ public class DrawApp extends JFrame implements ActionListener {
 		buttonPanel.setBackground(Color.LIGHT_GRAY);
 		
 		add(buttonPanel, BorderLayout.NORTH);
-
-		add(panel, BorderLayout.CENTER);
-
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setSize(800, 700);
-		setVisible(true);
 	}
-
+	
+	
 	/*
-	 * Handles the input button from the user
+	 * Handles the buttons input from the user
 	 */
 	public void actionPerformed(ActionEvent e) {
 		
 		if(e.getSource()==open) //Opens an existing file from the system
 		{
-			   File f = saving.getFile();
-	                try {
-	                    saving.readObject(f);
-	                }
-	                catch(IOException ex)
-	                {
-	                	JOptionPane.showMessageDialog(this, "Error in reading from File", "Error", JOptionPane.ERROR_MESSAGE);
-	                } 
+			 openFile();
 		}
-		if(e.getSource()== saveNew)
-		{
-			String fileName = JOptionPane.showInputDialog(this, "Enter file name");
+		if(e.getSource()== save){
 			
-			try {
-				panel.getShapes()[0].setIndex(panel.getIndex());
-				File f = saving.createFile(fileName);
-				saving.writeObject(f);
-			} catch (IOException e1) {
-				
-				e1.printStackTrace();
-			}
+			save();
 		}
-		if (e.getSource() == save) {
+		if (e.getSource() == newSave) {
 			
-			panel.getShapes()[0].setIndex(panel.getIndex());
-		
-			File f = saving.getFile();
-            try {
-                saving.writeObject(f);
-                JOptionPane.showMessageDialog(this, "Writing is done");
-            }
-            catch(IOException ex)
-            {
-       
-                JOptionPane.showMessageDialog(this, "Error in Writing from File", "Error", JOptionPane.ERROR_MESSAGE);
-	               
-            }
+			newSave();
 			
 		} else if (e.getSource() == clear) {
-			panel.setIndex(0);
-			panel.repaint();
+			
+			drawPanel.setIndex(0);
+			drawPanel.repaint();
+			
 		} else if (e.getSource() == fill) {
+			
 			if (fill.isSelected()) {
-				panel.setFill(true);
+				drawPanel.setFill(true);
 			} else
-				panel.setFill(false);
+				drawPanel.setFill(false);
+			
 		} else if (e.getSource() == colorbtn) {
-			color = JColorChooser.showDialog(this, "Select a color", color);
-			panel.setColor(color);
-		} else if (e.getSource() == del) {
+			
+			drawPanel.setColor(JColorChooser.showDialog(this, "Select a color", color));
+			
+		} else if (e.getSource() == delete) {
 
 			deleteShape();
 
 		} else {
-			String str = (String) shapesMenu.getSelectedItem();
-			switch (str) {
-			case "Line":
-				panel.setShape(1);
-				break;
-			case "Line2":
-				panel.setShape(2);
-				break;
-			case "Line3":
-				panel.setShape(3);
-				break;
-			case "Circle":
-				panel.setShape(4);
-				break;
-			case "Square":
-				panel.setShape(5);
-				break;
-			}
+			
+			selectShape();
+		}
+	}
+	
+	
+	/*
+	 * Private method to set the selected shape from the user
+	 */
+	private void selectShape() {
+		
+		String str = (String) shapesMenu.getSelectedItem();
+		switch (str) {
+		case "Line":
+			drawPanel.setShape(1);
+			break;
+		case "Line2":
+			drawPanel.setShape(2);
+			break;
+		case "Line3":
+			drawPanel.setShape(3);
+			break;
+		case "Circle":
+			drawPanel.setShape(4);
+			break;
+		case "Square":
+			drawPanel.setShape(5);
+			break;
+		}
+	}
+	
+	/*
+	 * Private method to open an existing draw from the file system 
+	 */
+	private void openFile() {
+		  file = saving.getFile();
+          try {
+              saving.readObject(file);
+          }
+          catch(IOException ex)
+          {
+          	JOptionPane.showMessageDialog(this, "Error in reading from File", "Error", JOptionPane.ERROR_MESSAGE);
+          } 
+	}
+	
+	/*
+	 * Private method to save the draw to a new file
+	 * @param fileName the name of the new file
+	 */
+	private void newSave() {
+		
+		String fileName = JOptionPane.showInputDialog(this, "Enter file name");
+		
+		try {
+			drawPanel.getShapes()[0].setIndex(drawPanel.getIndex());//*****check this *****
+			file = saving.createFile(fileName);
+			saving.writeObject(file);
+		} catch (IOException e1) {
+			
+			e1.printStackTrace();
 		}
 	}
 
-	public void deleteShape() {
-		boolean temp = (panel.getShape() instanceof Circle) || (panel.getShape() instanceof Rectangle);
+	/*
+	 * Private method to save the draw to an existing file in the system
+	 */
+	private void save() {
+		
+		drawPanel.getShapes()[0].setIndex(drawPanel.getIndex());
+		
+		file = saving.getFile();
+        try {
+            saving.writeObject(file);
+            JOptionPane.showMessageDialog(this, "Writing is done");
+        }
+        catch(IOException ex)
+        {
+   
+            JOptionPane.showMessageDialog(this, "Error in Writing from File", "Error", JOptionPane.ERROR_MESSAGE);
+               
+        }
+	}
+	
+	/*
+	 * Private method to delete the last shape from the array 
+	 * If the shape is a line the method will delete a length of 30 pixels 
+	 */
+	private void deleteShape() {
+		boolean temp = (drawPanel.getShape() instanceof Circle) || (drawPanel.getShape() instanceof Rectangle);
 
 		if (temp) {
-			panel.setIndex(panel.getIndex() - 1);
+			drawPanel.setIndex(drawPanel.getIndex() - 1);
 		} else {
-			int x = 30; //delete the line shape form the screen in the size of 30 dots 
+			int x = 30; //delete the line shape form the screen in the size of 30 pixels 
 
-			while (!temp & x > 0 & panel.getIndex() > 0) {
-				panel.setIndex(panel.getIndex() - 1);
-				temp = panel.getShape() instanceof Circle || panel.getShape() instanceof Rectangle;
+			while (!temp & x > 0 & drawPanel.getIndex() > 0) {
+				drawPanel.setIndex(drawPanel.getIndex() - 1);
+				temp = drawPanel.getShape() instanceof Circle || drawPanel.getShape() instanceof Rectangle;
 				x--;
 			}
 		}
-		panel.repaint();
+		drawPanel.repaint();
 	}
 
 	public  DrawPanel getPanel() {
-		return panel;
+		return drawPanel;
 	}
 
 	
-	
-
 
 }
+
+
+
+
