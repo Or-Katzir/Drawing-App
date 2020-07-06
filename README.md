@@ -1,4 +1,4 @@
-# Drawing-app
+# Drawing application
 Super Basic drawing application 
 
 This is my first repository! 
